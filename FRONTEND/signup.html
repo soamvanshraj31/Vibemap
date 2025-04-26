@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VibeFinder - Sign Up</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword,
+      updateProfile,
+      setPersistence,
+      browserLocalPersistence
+    } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc, 
+      serverTimestamp,
+      enableIndexedDbPersistence
+    } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCyS_iDrdKipKVfpKr2HhWFoKzbuu1qdeQ",
+      authDomain: "vibecheck-dad8a.firebaseapp.com",
+      projectId: "vibecheck-dad8a",
+      storageBucket: "vibecheck-dad8a.appspot.com",
+      messagingSenderId: "201511764257",
+      appId: "1:201511764257:web:df282b57230ff9babc7e60"
+    };
+
+    try {
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Set persistent auth state
+      await setPersistence(auth, browserLocalPersistence);
+
+      // Enable Firestore offline persistence
+      await enableIndexedDbPersistence(db).catch((err) => {
+        if (err.code === 'failed-precondition') {
+          console.warn('Multiple tabs open, persistence disabled');
+        } else if (err.code === 'unimplemented') {
+          console.warn('Browser doesn\'t support persistence');
+        }
+      });
+
+      // Define signup function
+      async function signUpWithEmailPassword(email, password, displayName) {
+        try {
+          // Create auth user
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
+
+          // Update profile
+          await updateProfile(user, { displayName });
+
+          // Create user document
+          await setDoc(doc(db, 'users', user.uid), {
+            uid: user.uid,
+            email,
+            displayName,
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp(),
+            profile: {
+              firstName: displayName.split(' ')[0],
+              lastName: displayName.split(' ').slice(1).join(' '),
+              photoURL: null,
+              bio: '',
+              location: '',
+              phoneNumber: ''
+            },
+            preferences: {
+              notifications: true,
+              theme: 'dark',
+              language: 'en',
+              emailNotifications: true
+            },
+            stats: {
+              totalVibes: 0,
+              placesVisited: 0,
+              reviewsWritten: 0,
+              photosUploaded: 0
+            },
+            social: {
+              followers: 0,
+              following: 0,
+              likes: 0
+            },
+            settings: {
+              privacyLevel: 'public',
+              showLocation: true,
+              showActivity: true
+            }
+          });
+
+          // Create default subcollections
+          await setDoc(doc(db, 'users', user.uid, 'savedPlaces', 'default'), {
+            createdAt: serverTimestamp(),
+            places: []
+          });
+
+          await setDoc(doc(db, 'users', user.uid, 'activity', 'default'), {
+            createdAt: serverTimestamp(),
+            activities: []
+          });
+
+          return { success: true, user };
+        } catch (error) {
+          console.error('Sign up error:', error);
+          let errorMessage;
+          
+          switch (error.code) {
+            case 'auth/email-already-in-use':
+              errorMessage = 'An account with this email already exists.';
+              break;
+            case 'auth/invalid-email':
+              errorMessage = 'Invalid email address format.';
+              break;
+            case 'auth/operation-not-allowed':
+              errorMessage = 'Email/password accounts are not enabled.';
+              break;
+            case 'auth/weak-password':
+              errorMessage = 'Password is too weak.';
+              break;
+            case 'auth/network-request-failed':
+              errorMessage = 'Network error. Please check your connection.';
+              break;
+            default:
+              errorMessage = `Sign up failed: ${error.message}`;
+          }
+          
+          return {
+            success: false,
+            error: errorMessage
+          };
+        }
+      }
+
+      // Make auth, db and functions available globally
+      window.auth = auth;
+      window.db = db;
+      window.signUpWithEmailPassword = signUpWithEmailPassword;
+      
+      console.log('Firebase initialized successfully');
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded shadow-lg';
+      errorDiv.textContent = 'Error initializing app. Please try again later.';
+      document.body.appendChild(errorDiv);
+      setTimeout(() => errorDiv.remove(), 5000);
+    }
+  </script>
+  
+  <!-- Custom Auth JS -->
+  <script type="module">
+    import { signInWithGoogle, signInWithFacebook } from './auth.js';
+    
+    // Make auth functions available globally
+    window.signInWithGoogle = signInWithGoogle;
+    window.signInWithFacebook = signInWithFacebook;
+  </script>
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles/login.css">
+</head>
+<body class="text-white">
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 bg-gray-900 bg-opacity-90 backdrop-blur-sm z-50">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <a href="index11.html" class="flex items-center space-x-2">
+        <i class="fas fa-map-marker-alt text-purple-500 text-xl"></i>
+        <span class="font-bold text-xl bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">VibeFinder</span>
+      </a>
+      <div class="flex items-center space-x-4">
+        <a href="#" class="text-gray-400 hover:text-white transition-colors">Help</a>
+        <a href="#" class="text-gray-400 hover:text-white transition-colors">About</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="min-h-screen flex items-center justify-center p-4" style="background-color: #1a1a1a; background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600'); background-size: cover; background-position: center; background-attachment: fixed;">
+    <div class="glass-effect rounded-2xl p-8 w-full max-w-md slide-up" style="background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1);">
+      <!-- Logo and Title -->
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+          Create Account
+        </h1>
+        <p class="text-gray-400 mt-2">Join VibeFinder and explore your city</p>
+      </div>
+
+      <!-- Social Sign Up Buttons -->
+      <div class="space-y-3 mb-6">
+        <button onclick="handleSocialSignup('google')" class="w-full bg-white text-gray-900 py-2 px-4 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
+          <img src="https://www.google.com/favicon.ico" alt="Google" class="w-5 h-5 mr-2">
+          Sign up with Google
+        </button>
+        <button onclick="handleSocialSignup('facebook')" class="w-full bg-[#1877F2] text-white py-2 px-4 rounded-lg flex items-center justify-center hover:bg-[#1865F2] transition-colors">
+          <i class="fab fa-facebook mr-2"></i>
+          Sign up with Facebook
+        </button>
+      </div>
+
+      <!-- Divider -->
+      <div class="flex items-center my-6">
+        <div class="flex-1 border-t border-gray-600"></div>
+        <span class="px-4 text-gray-400">or</span>
+        <div class="flex-1 border-t border-gray-600"></div>
+      </div>
+
+      <!-- Sign Up Form -->
+      <form id="signupForm" class="space-y-4">
+        <div>
+          <label class="block text-gray-400 mb-2" for="fullName">Full Name</label>
+          <div class="relative">
+            <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="text" id="fullName" name="fullName" required
+              class="w-full bg-gray-800 text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Enter your full name">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-gray-400 mb-2" for="email">Email Address</label>
+          <div class="relative">
+            <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="email" id="email" name="email" required
+              class="w-full bg-gray-800 text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Enter your email">
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-gray-400 mb-2" for="password">Password</label>
+          <div class="relative">
+            <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="password" id="password" name="password" required
+              class="w-full bg-gray-800 text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Create a password">
+            <button type="button" class="toggle-password absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+          <div class="text-xs text-gray-400 mt-1">
+            Password must be at least 8 characters long and include a number
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-gray-400 mb-2" for="confirmPassword">Confirm Password</label>
+          <div class="relative">
+            <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="password" id="confirmPassword" name="confirmPassword" required
+              class="w-full bg-gray-800 text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Confirm your password">
+            <button type="button" class="toggle-password absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center">
+          <input type="checkbox" id="termsAccept" required
+            class="form-checkbox bg-gray-800 border-gray-600 rounded text-purple-500">
+          <label for="termsAccept" class="ml-2 text-gray-400 text-sm">
+            I accept the <a href="#" class="text-purple-500 hover:text-purple-400">Terms of Service</a> and 
+            <a href="#" class="text-purple-500 hover:text-purple-400">Privacy Policy</a>
+          </label>
+        </div>
+
+        <button type="submit" id="signupButton"
+          class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-2 px-4 rounded-lg transition-all flex items-center justify-center">
+          <span>Create Account</span>
+          <i class="fas fa-circle-notch fa-spin ml-2 hidden"></i>
+        </button>
+      </form>
+
+      <!-- Login Link -->
+      <p class="text-center mt-6 text-gray-400">
+        Already have an account? 
+        <a href="login.html" class="text-purple-500 hover:text-purple-400">Sign in</a>
+      </p>
+
+      <!-- Error Message -->
+      <div id="errorMessage" class="hidden mt-4 p-3 rounded bg-red-500 bg-opacity-20 text-red-500 text-sm"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const signupForm = document.getElementById('signupForm');
+      const signupButton = document.getElementById('signupButton');
+      const errorMessage = document.getElementById('errorMessage');
+      const buttonText = signupButton.querySelector('span');
+      const spinner = signupButton.querySelector('.fas');
+
+      // Toggle password visibility
+      document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function() {
+          const input = this.parentElement.querySelector('input');
+          const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+          input.setAttribute('type', type);
+          this.querySelector('i').classList.toggle('fa-eye');
+          this.querySelector('i').classList.toggle('fa-eye-slash');
+        });
+      });
+
+      // Password validation
+      function validatePassword(password) {
+        return password.length >= 8 && /\d/.test(password);
+      }
+
+      // Form submission
+      signupForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const fullName = document.getElementById('fullName').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const termsAccepted = document.getElementById('termsAccept').checked;
+
+        // Reset previous error states
+        errorMessage.classList.add('hidden');
+        
+        // Validation
+        if (!fullName || !email || !password || !confirmPassword) {
+          showError('Please fill in all fields');
+          return;
+        }
+
+        if (!validatePassword(password)) {
+          showError('Password must be at least 8 characters long and include a number');
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          showError('Passwords do not match');
+          return;
+        }
+
+        if (!termsAccepted) {
+          showError('Please accept the Terms of Service and Privacy Policy');
+          return;
+        }
+
+        try {
+          // Update button state to loading
+          buttonText.textContent = 'Creating Account...';
+          spinner.classList.remove('hidden');
+          signupButton.disabled = true;
+
+          console.log('Starting signup process...');
+          const result = await window.signUpWithEmailPassword(email, password, fullName);
+          console.log('Signup result:', result);
+
+          if (result.success) {
+            console.log('Signup successful, redirecting...');
+            // Show success message before redirect
+            const successMessage = document.createElement('div');
+            successMessage.className = 'mt-4 p-3 rounded bg-green-500 bg-opacity-20 text-green-500 text-sm';
+            successMessage.textContent = 'Account created successfully! Redirecting...';
+            errorMessage.parentNode.insertBefore(successMessage, errorMessage.nextSibling);
+            
+            // Short delay before redirect to show success message
+            setTimeout(() => {
+              window.location.href = 'index11.html';
+            }, 1500);
+          } else {
+            console.error('Signup failed:', result.error);
+            showError(result.error);
+            signupButton.classList.add('shake');
+            setTimeout(() => signupButton.classList.remove('shake'), 500);
+            
+            // Reset button state
+            buttonText.textContent = 'Create Account';
+            spinner.classList.add('hidden');
+            signupButton.disabled = false;
+          }
+        } catch (error) {
+          console.error('Signup error:', error);
+          showError('Sign up failed. Please try again.');
+          
+          // Reset button state
+          buttonText.textContent = 'Create Account';
+          spinner.classList.add('hidden');
+          signupButton.disabled = false;
+        }
+      });
+
+      // Social sign up handler
+      window.handleSocialSignup = async function(provider) {
+        const button = event.target.closest('button');
+        const originalContent = button.innerHTML;
+        
+        try {
+          // Update button state
+          button.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+          button.disabled = true;
+          
+          let result;
+          if (provider === 'google') {
+            console.log('Starting Google signup...');
+            result = await window.signInWithGoogle();
+          } else if (provider === 'facebook') {
+            console.log('Starting Facebook signup...');
+            result = await window.signInWithFacebook();
+          }
+          
+          console.log('Social signup result:', result);
+          
+          if (result.success) {
+            // Show success message before redirect
+            const successMessage = document.createElement('div');
+            successMessage.className = 'mt-4 p-3 rounded bg-green-500 bg-opacity-20 text-green-500 text-sm';
+            successMessage.textContent = 'Account created successfully! Redirecting...';
+            errorMessage.parentNode.insertBefore(successMessage, errorMessage.nextSibling);
+            
+            // Short delay before redirect
+            setTimeout(() => {
+              window.location.href = 'index11.html';
+            }, 1500);
+          } else {
+            showError(result.error);
+            // Reset button state
+            button.innerHTML = originalContent;
+            button.disabled = false;
+          }
+        } catch (error) {
+          console.error('Social signup error:', error);
+          showError('Authentication failed. Please try again.');
+          // Reset button state
+          button.innerHTML = originalContent;
+          button.disabled = false;
+        }
+      };
+
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.classList.remove('hidden');
+        errorMessage.classList.add('slide-up');
+        setTimeout(() => errorMessage.classList.remove('slide-up'), 500);
+      }
+    });
+  </script>
+</body>
+</html> 
