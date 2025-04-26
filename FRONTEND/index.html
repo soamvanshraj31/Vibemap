@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>VibeFinder - Discover Your City's Mood</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FontAwesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Leaflet.heat plugin -->
+  <script src="https://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="dark-theme">
+
+  <!-- Navigation Bar -->
+  <nav class="bg-gray-900 text-white p-4 border-b border-gray-800">
+    <div class="container mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <button id="sidebarToggle" class="md:hidden text-white hover:text-gray-300">
+          <i class="fas fa-bars text-xl"></i>
+        </button>
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+          VibeFinder
+        </h1>
+        <div class="relative">
+          <input type="text" id="searchPlace" placeholder="Search location..." 
+            class="bg-gray-800 px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 w-64">
+          <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="index11.html" class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm">
+          <i class="fas fa-compass mr-2"></i>Explore Vibes
+        </a>
+        <button id="heatmapToggle" class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm">
+          <i class="fas fa-fire-alt mr-2"></i>Heatmap
+        </button>
+        <button id="filterVibes" class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm">
+          <i class="fas fa-filter mr-2"></i>Filter
+        </button>
+        <a href="add-vibe.html" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-2 rounded-lg text-sm pulse">
+          <i class="fas fa-plus mr-2"></i>Add Vibe
+        </a>
+      </div>
+    </div>
+  </nav>
+  <!-- Main Content -->
+  <div class="flex h-[calc(100vh-64px)]">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar w-80 p-4 md:block overflow-y-auto fixed md:relative z-40 transform transition-transform duration-300 ease-in-out -translate-x-full md:translate-x-0">
+      <div class="mb-6">
+        <h2 class="text-xl font-bold mb-4 flex items-center">
+          <i class="fas fa-info-circle mr-2 text-purple-500"></i>
+          About VibeFinder
+        </h2>
+        <div class="p-4 rounded-lg bg-gray-800 text-gray-300">
+          <p>VibeFinder helps you discover the mood of your city by mapping locations, events, and experiences. Explore, filter, and share vibes to make the most of your urban adventures!</p>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <h2 class="text-xl font-bold mb-4 flex items-center">
+          <i class="fas fa-map-marked-alt mr-2 text-purple-500"></i>
+          Interactive Map
+        </h2>
+        <div class="p-4 rounded-lg bg-gray-800 text-gray-300">
+          <p>Use our interactive map to explore trending places, filter by vibe, and visualize city hotspots with the heatmap feature. Click on any marker to learn more about a location!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay for mobile sidebar -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+
+    <!-- Map Container -->
+    <div id="map" class="flex-1 map-container"></div>
+
+    <!-- Heatmap Legend -->
+    <div id="heatmapLegend" class="fixed bottom-4 right-4 bg-gray-800 bg-opacity-90 p-3 rounded-lg shadow-lg z-50">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-sm font-bold text-white">Heatmap Intensity</h3>
+        <button id="toggleLegend" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="flex flex-col space-y-2">
+        <div class="legend-gradient h-4 w-full rounded"></div>
+        <div class="flex justify-between text-xs text-gray-300">
+          <span>Low</span>
+          <span>Medium</span>
+          <span>High</span>
+          <span>Very High</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vibe Selection Modal -->
+    <div id="vibeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-gray-800 p-6 rounded-lg w-96 transform transition-all">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold">Add Your Vibe</h2>
+          <button id="closeModal" class="text-gray-400 hover:text-white">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="mb-4">
+          <input type="text" id="vibeDescription" placeholder="Describe this vibe (optional)" 
+            class="w-full bg-gray-700 p-3 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500">
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <button class="vibe-btn bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 p-4 rounded-lg flex flex-col items-center" data-vibe="Fun">
+            <i class="fas fa-smile text-2xl mb-2"></i>
+            <span>Fun</span>
+          </button>
+          <button class="vibe-btn bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 p-4 rounded-lg flex flex-col items-center" data-vibe="Calm">
+            <i class="fas fa-peace text-2xl mb-2"></i>
+            <span>Calm</span>
+          </button>
+          <button class="vibe-btn bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 p-4 rounded-lg flex flex-col items-center" data-vibe="Romantic">
+            <i class="fas fa-heart text-2xl mb-2"></i>
+            <span>Romantic</span>
+          </button>
+          <button class="vibe-btn bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 p-4 rounded-lg flex flex-col items-center" data-vibe="Energetic">
+            <i class="fas fa-bolt text-2xl mb-2"></i>
+            <span>Energetic</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div id="filterModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+      <div class="bg-gray-800 p-6 rounded-lg w-80">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold">Filter Vibes</h2>
+          <button id="closeFilterModal" class="text-gray-400 hover:text-white">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <h3 class="font-bold text-sm text-gray-300">Vibe Types</h3>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" class="vibe-filter" value="Fun" checked>
+            <span class="text-yellow-500"><i class="fas fa-smile mr-2"></i>Fun</span>
+          </label>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" class="vibe-filter" value="Calm" checked>
+            <span class="text-blue-500"><i class="fas fa-peace mr-2"></i>Calm</span>
+          </label>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" class="vibe-filter" value="Romantic" checked>
+            <span class="text-pink-500"><i class="fas fa-heart mr-2"></i>Romantic</span>
+          </label>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" class="vibe-filter" value="Energetic" checked>
+            <span class="text-red-500"><i class="fas fa-bolt mr-2"></i>Energetic</span>
+          </label>
+          
+          <h3 class="font-bold text-sm text-gray-300 mt-6">Location Types</h3>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" class="vibe-filter" value="natural" checked>
+            <span class="text-green-500"><i class="fas fa-tree mr-2"></i>Natural</span>
+          </label>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" class="vibe-filter" value="hillstation" checked>
+            <span class="text-purple-500"><i class="fas fa-cloud-sun mr-2"></i>Hill Station</span>
+          </label>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" class="vibe-filter" value="temple" checked>
+            <span class="text-teal-500"><i class="fas fa-pray mr-2"></i>Temple</span>
+          </label>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" class="vibe-filter" value="adventure" checked>
+            <span class="text-orange-500"><i class="fas fa-mountain mr-2"></i>Adventure</span>
+          </label>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" class="vibe-filter" value="wildlife" checked>
+            <span class="text-green-600"><i class="fas fa-paw mr-2"></i>Wildlife</span>
+          </label>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" class="vibe-filter" value="market" checked>
+            <span class="text-yellow-600"><i class="fas fa-shopping-bag mr-2"></i>Market</span>
+          </label>
+        </div>
+        <button id="applyFilters" class="w-full bg-purple-600 hover:bg-purple-700 p-2 rounded-lg mt-4">
+          Apply Filters
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Load location data first -->
+  <script src="locationData.js"></script>
+  
+  <!-- Load main application JavaScript -->
+  <script src="app.js"></script>
+
+  <!-- URL Parameter Handler -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Get URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const filterParam = urlParams.get('filter');
+      
+      if (filterParam) {
+        // Wait for the map to initialize
+        setTimeout(() => {
+          // Find the filter button and click it to open the filter modal
+          const filterButton = document.getElementById('filterVibes');
+          if (filterButton) {
+            filterButton.click();
+            
+            // Wait for the modal to open
+            setTimeout(() => {
+              // Find all checkboxes and uncheck them first
+              const checkboxes = document.querySelectorAll('.vibe-filter');
+              checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+              });
+              
+              // Check only the matching filter
+              const matchingCheckbox = Array.from(checkboxes).find(checkbox => 
+                checkbox.value.toLowerCase() === filterParam.toLowerCase()
+              );
+              
+              if (matchingCheckbox) {
+                matchingCheckbox.checked = true;
+                
+                // Click the apply filters button
+                const applyButton = document.getElementById('applyFilters');
+                if (applyButton) {
+                  applyButton.click();
+                }
+              }
+            }, 500);
+          }
+        }, 1000);
+      }
+    });
+  </script>
+
+</body>
+</html>
