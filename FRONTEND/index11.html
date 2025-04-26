@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VibeFinder - City Vibes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places,visualization"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #1a1a1a;
+      color: white;
+    }
+    .hero-section {
+      background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://source.unsplash.com/1600x900/?city,night');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      padding: 120px 0;
+      text-align: center;
+    }
+    .vibe-card {
+      background: linear-gradient(45deg, rgba(17, 24, 39, 0.8), rgba(31, 41, 55, 0.8));
+      backdrop-filter: blur(5px);
+      transition: all 0.3s ease;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .vibe-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .vibe-title {
+      color: #FFD700;
+      font-weight: bold;
+    }
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .event-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(31, 41, 55, 0.5);
+      transition: all 0.3s ease;
+    }
+    .event-item:hover {
+      background: rgba(31, 41, 55, 0.8);
+      transform: translateX(5px);
+    }
+    .event-item i {
+      margin-right: 10px;
+    }
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(45deg, #8B5CF6, #EC4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .testimonial-card {
+      background: linear-gradient(45deg, rgba(17, 24, 39, 0.8), rgba(31, 41, 55, 0.8));
+      border-radius: 10px;
+      padding: 20px;
+      margin: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .testimonial-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .cta-section {
+      background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://source.unsplash.com/1600x900/?city,lights');
+      background-size: cover;
+      background-position: center;
+      padding: 80px 0;
+    }
+    .vibe-check-btn {
+      background: linear-gradient(45deg, #8B5CF6, #EC4899);
+      transition: all 0.3s ease;
+    }
+    .vibe-check-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+    }
+    .stats-card {
+      background: rgba(31, 41, 55, 0.5);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .stats-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      background: linear-gradient(45deg, #8B5CF6, #EC4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .vibe-progress {
+      transition: width 1s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="bg-gray-900 text-white p-4 border-b border-gray-800 sticky top-0 z-50">
+    <div class="container mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+          VibeFinder
+        </h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="#vibeCards" class="hover:text-purple-400">Explore</a>
+        <a href="#features" class="hover:text-purple-400">Features</a>
+        <a href="#testimonials" class="hover:text-purple-400">Testimonials</a>
+        <a href="index.html" class="vibe-check-btn px-4 py-2 rounded-lg text-white">
+          <i class="fas fa-map-marker-alt mr-2"></i>Vibe Check
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container mx-auto">
+      <h1 class="text-5xl text-white font-bold mb-4">Discover Your City's Vibe</h1>
+      <p class="text-xl mb-6 max-w-2xl mx-auto">Explore the latest trends, events, and hidden gems in your city. Find the perfect spot for any mood or occasion.</p>
+      <div class="flex justify-center space-x-4">
+        <a href="#vibeCards" class="bg-purple-600 text-white py-3 px-8 rounded-lg hover:bg-purple-700 transition-all">
+          <i class="fas fa-compass mr-2"></i>Start Exploring
+        </a>
+        <a href="index.html" class="bg-transparent border border-purple-500 text-white py-3 px-8 rounded-lg hover:bg-purple-500 hover:bg-opacity-20 transition-all">
+          <i class="fas fa-map-marker-alt mr-2"></i>Vibe Check
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="py-12 bg-gray-900">
+    <div class="container mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="stats-card">
+          <div class="stats-number" id="totalLocations">500+</div>
+          <div class="text-gray-300">Locations</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-number" id="totalVibes">1,200+</div>
+          <div class="text-gray-300">Vibes Shared</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-number" id="totalCities">10+</div>
+          <div class="text-gray-300">Cities</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Vibe Cards Section -->
+  <section id="vibeCards" class="container mx-auto py-16">
+    <h2 class="text-3xl text-center text-white mb-4">Trending Vibes</h2>
+    <p class="text-center text-gray-400 mb-12 max-w-2xl mx-auto">Discover the most popular vibes in your city and find the perfect spot for your mood.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" id="vibeCardsContainer">
+      <!-- Vibe cards will be dynamically generated here -->
+    </div>
+  </section>
+
+  <!-- Dehradun Highlights Section -->
+  <section class="py-16 bg-gray-900">
+    <div class="container mx-auto">
+      <h2 class="text-3xl text-center text-white mb-4">Dehradun Highlights</h2>
+      <p class="text-center text-gray-400 mb-12 max-w-2xl mx-auto">Explore the best that Dehradun has to offer - from natural beauty to cultural heritage.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Natural Beauty -->
+        <div class="vibe-card p-6 text-center">
+          <div class="feature-icon mb-4">
+            <i class="fas fa-mountain"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Natural Beauty</h3>
+          <p class="text-gray-300 mb-4">Discover the stunning natural landscapes and scenic spots in Dehradun.</p>
+          <div class="flex justify-center mb-4">
+            <span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+            <span class="text-sm text-gray-400">Natural spots</span>
+          </div>
+          <a href="index.html?filter=natural" class="vibe-check-btn px-4 py-2 rounded-lg text-white inline-block">
+            <i class="fas fa-map-marker-alt mr-2"></i>Explore
+          </a>
+        </div>
+        
+        <!-- Hill Stations -->
+        <div class="vibe-card p-6 text-center">
+          <div class="feature-icon mb-4">
+            <i class="fas fa-cloud-sun"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Hill Stations</h3>
+          <p class="text-gray-300 mb-4">Visit the famous hill stations like Mussoorie and experience the cool mountain air.</p>
+          <div class="flex justify-center mb-4">
+            <span class="inline-block w-3 h-3 rounded-full bg-purple-500 mr-2"></span>
+            <span class="text-sm text-gray-400">Hill stations</span>
+          </div>
+          <a href="index.html?filter=hillstation" class="vibe-check-btn px-4 py-2 rounded-lg text-white inline-block">
+            <i class="fas fa-map-marker-alt mr-2"></i>Explore
+          </a>
+        </div>
+        
+        <!-- Temples -->
+        <div class="vibe-card p-6 text-center">
+          <div class="feature-icon mb-4">
+            <i class="fas fa-pray"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Temples</h3>
+          <p class="text-gray-300 mb-4">Explore the spiritual side of Dehradun with its ancient temples and monasteries.</p>
+          <div class="flex justify-center mb-4">
+            <span class="inline-block w-3 h-3 rounded-full bg-teal-500 mr-2"></span>
+            <span class="text-sm text-gray-400">Temples</span>
+          </div>
+          <a href="index.html?filter=temple" class="vibe-check-btn px-4 py-2 rounded-lg text-white inline-block">
+            <i class="fas fa-map-marker-alt mr-2"></i>Explore
+          </a>
+        </div>
+        
+        <!-- Adventure -->
+        <div class="vibe-card p-6 text-center">
+          <div class="feature-icon mb-4">
+            <i class="fas fa-hiking"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Adventure</h3>
+          <p class="text-gray-300 mb-4">Get your adrenaline pumping with trekking, camping, and adventure sports.</p>
+          <div class="flex justify-center mb-4">
+            <span class="inline-block w-3 h-3 rounded-full bg-orange-500 mr-2"></span>
+            <span class="text-sm text-gray-400">Adventure spots</span>
+          </div>
+          <a href="index.html?filter=adventure" class="vibe-check-btn px-4 py-2 rounded-lg text-white inline-block">
+            <i class="fas fa-map-marker-alt mr-2"></i>Explore
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="bg-gray-900 py-16">
+    <div class="container mx-auto">
+      <h2 class="text-3xl text-center text-white mb-4">Amazing Features</h2>
+      <p class="text-center text-gray-400 mb-12 max-w-2xl mx-auto">VibeFinder comes packed with powerful features to help you discover the perfect spots in your city.</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="text-center p-6">
+          <div class="feature-icon">
+            <i class="fas fa-map-marked-alt"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Interactive Map</h3>
+          <p class="text-gray-300">Explore locations on an interactive map with custom markers for different vibe types.</p>
+        </div>
+        <div class="text-center p-6">
+          <div class="feature-icon">
+            <i class="fas fa-fire-alt"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Heatmap</h3>
+          <p class="text-gray-300">Visualize the intensity of vibes across different areas with our heatmap feature.</p>
+        </div>
+        <div class="text-center p-6">
+          <div class="feature-icon">
+            <i class="fas fa-search"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Smart Search</h3>
+          <p class="text-gray-300">Find locations by name, vibe type, or features with our intelligent search system.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Events Section -->
+  <section class="py-16">
+    <div class="container mx-auto">
+      <h2 class="text-3xl text-center text-white mb-4">Featured Events</h2>
+      <p class="text-center text-gray-400 mb-12 max-w-2xl mx-auto">Don't miss out on these exciting events happening in your city.</p>
+      <div class="space-y-6 max-w-3xl mx-auto">
+        <!-- Event Item 1 -->
+        <div class="event-item">
+          <i class="fas fa-music text-2xl text-yellow-500"></i>
+          <div>
+            <p class="text-white font-medium">🎶 Music Festival at Central Park</p>
+            <p class="text-gray-400 text-sm">Join us for an evening of live music! Saturday, 7 PM</p>
+          </div>
+        </div>
+        <!-- Event Item 2 -->
+        <div class="event-item">
+          <i class="fas fa-running text-2xl text-green-500"></i>
+          <div>
+            <p class="text-white font-medium">🏃‍♂ City Marathon</p>
+            <p class="text-gray-400 text-sm">Run through the heart of the city this Sunday! 6 AM start</p>
+          </div>
+        </div>
+        <!-- Event Item 3 -->
+        <div class="event-item">
+          <i class="fas fa-cloud-sun text-2xl text-blue-500"></i>
+          <div>
+            <p class="text-white font-medium">☀ Weekend Weather Alert</p>
+            <p class="text-gray-400 text-sm">Expect clear skies this weekend - perfect for outdoor vibes!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials Section -->
+  <section id="testimonials" class="bg-gray-900 py-16">
+    <div class="container mx-auto">
+      <h2 class="text-3xl text-center text-white mb-4">What People Say</h2>
+      <p class="text-center text-gray-400 mb-12 max-w-2xl mx-auto">Hear from our users about their experience with VibeFinder.</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="testimonial-card">
+          <div class="flex items-center mb-4">
+            <img src="https://randomuser.me/api/portraits/men/12.jpg" alt="User" class="testimonial-avatar mr-4">
+            <div>
+              <h4 class="font-bold">Neeraj Pepsu</h4>
+              <p class="text-gray-400 text-sm">Pepsu Land</p>
+            </div>
+          </div>
+          <p class="text-gray-300">"Bro, this app is full paisa vasool! Found all the happening places in one tap. VibeFinder is my new wingman!"</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="flex items-center mb-4">
+            <img src="https://randomuser.me/api/portraits/men/34.jpg" alt="User" class="testimonial-avatar mr-4">
+            <div>
+              <h4 class="font-bold">Rajat Dalal</h4>
+              <p class="text-gray-400 text-sm">Dalal Street</p>
+            </div>
+          </div>
+          <p class="text-gray-300">"VibeFinder is the real deal! I never miss a cool event now. My weekends are sorted, thanks to this legend of an app."</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="flex items-center mb-4">
+            <img src="https://randomuser.me/api/portraits/men/56.jpg" alt="User" class="testimonial-avatar mr-4">
+            <div>
+              <h4 class="font-bold">Deepak Kalal</h4>
+              <p class="text-gray-400 text-sm">Internet Sensation</p>
+            </div>
+          </div>
+          <p class="text-gray-300">"O darling! VibeFinder made my life so happening. Wherever I go, I find the best vibes. Highly recommended!"</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="flex items-center mb-4">
+            <img src="https://randomuser.me/api/portraits/men/99.jpg" alt="User" class="testimonial-avatar mr-4">
+            <div>
+              <h4 class="font-bold">Puneet Superstar</h4>
+              <p class="text-gray-400 text-sm">Internet Celebrity</p>
+            </div>
+          </div>
+          <p class="text-gray-300">"VibeFinder is OP! Full power, no shower. I tell everyone, use this app and become a superstar in your city!"</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container mx-auto text-center">
+      <h2 class="text-4xl font-bold mb-6">Ready to Discover Your City's Vibes?</h2>
+      <p class="text-xl mb-8 max-w-2xl mx-auto">Join thousands of users who are already exploring the best spots in their cities.</p>
+      <a href="index.html" class="vibe-check-btn px-8 py-4 rounded-lg text-white text-lg inline-block">
+        <i class="fas fa-map-marker-alt mr-2"></i>Vibe Check Now
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="container mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <h3 class="text-xl font-bold mb-4 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">VibeFinder</h3>
+          <p class="text-gray-400">Discover the perfect vibe for any occasion in your city.</p>
+        </div>
+        <div>
+          <h4 class="font-bold mb-4">Quick Links</h4>
+          <ul class="space-y-2">
+            <li><a href="#vibeCards" class="text-gray-400 hover:text-purple-400">Explore</a></li>
+            <li><a href="#features" class="text-gray-400 hover:text-purple-400">Features</a></li>
+            <li><a href="#testimonials" class="text-gray-400 hover:text-purple-400">Testimonials</a></li>
+            <li><a href="index.html" class="text-gray-400 hover:text-purple-400">Vibe Check</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold mb-4">Contact</h4>
+          <ul class="space-y-2">
+            <li class="text-gray-400"><i class="fas fa-envelope mr-2"></i> info@vibefinder.com</li>
+            <li class="text-gray-400"><i class="fas fa-phone mr-2"></i> +1 (555) 123-4567</li>
+            <li class="text-gray-400"><i class="fas fa-map-marker-alt mr-2"></i> 123 Vibe Street, City</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold mb-4">Follow Us</h4>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-400 hover:text-purple-400 text-xl"><i class="fab fa-facebook"></i></a>
+            <a href="#" class="text-gray-400 hover:text-purple-400 text-xl"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="text-gray-400 hover:text-purple-400 text-xl"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="text-gray-400 hover:text-purple-400 text-xl"><i class="fab fa-tiktok"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+        <p>&copy; 2025 VibeFinder. All Rights Reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Load location data first -->
+  <script src="locationData.js"></script>
+  
+  <!-- Trending Vibes Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Function to create a vibe card
+      function createVibeCard(vibe, count, color, icon) {
+        // Map vibe types to Unsplash images for trending vibes
+        const photoMap = {
+          'Fun': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80', // people having fun
+          'Relax': 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80', // relaxing scene
+          'Romantic': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80', // romantic couple
+          'Natural': 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=400&q=80', // beautiful nature
+          'Adventure': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=400&q=80', // adventure hiking
+          'Family': 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80' // happy family
+        };
+        // For other vibes, fallback to Unsplash search
+        const photoPath = photoMap[vibe] || `https://source.unsplash.com/400x300/?${vibe.toLowerCase()},city`;
+
+        return `
+          <div class="vibe-card p-6">
+            <img src="${photoPath}" alt="${vibe} Vibe" class="rounded-lg mb-4 w-full h-48 object-cover">
+            <h3 class="vibe-title text-2xl mb-2">${vibe}</h3>
+            <p class="text-sm text-gray-300 mb-4">${getVibeDescription(vibe)}</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-400">${count} vibes today</span>
+              <a href="index.html?filter=${vibe.toLowerCase()}" class="text-purple-400 hover:text-purple-300 text-sm">Explore <i class="fas fa-arrow-right ml-1"></i></a>
+            </div>
+          </div>
+        `;
+      }
+
+      // Function to get vibe description
+      function getVibeDescription(vibe) {
+        const descriptions = {
+          'Fun': 'Whether you\'re partying or having a blast, the fun vibe is always alive!',
+          'Relax': 'Take it easy and let the peaceful vibes of the city wash over you.',
+          'Romantic': 'Feel the love and connection in the air — perfect for your next date.',
+          'Energetic': 'Get your heart pumping with these high-energy spots and activities.',
+          'Historical': 'Step back in time and explore the rich history of these fascinating locations.',
+          'Natural': 'Connect with nature in these beautiful outdoor spaces and parks.',
+          'Adventure': 'Seek thrills and excitement in these adventurous destinations.',
+          'Religious': 'Find peace and spiritual connection in these sacred spaces.',
+          'Hill Station': 'Experience the cool mountain air and breathtaking views of the Himalayas.',
+          'Temple': 'Discover the spiritual heritage and ancient temples of the region.',
+          'Wildlife': 'Encounter diverse wildlife in the sanctuaries and parks of Dehradun.',
+          'Market': 'Shop for local crafts, spices, and souvenirs in the bustling markets.',
+          'Family': 'Enjoy quality time with your loved ones in these family-friendly spots.'
+        };
+        return descriptions[vibe] || 'Experience the unique vibe of this location.';
+      }
+
+      // Function to count vibes by type
+      function countVibesByType() {
+        const vibeCounts = {};
+        
+        // Initialize with default vibes
+        const defaultVibes = ['Fun', 'Relax', 'Romantic', 'Energetic', 'Historical', 'Natural', 'Adventure', 'Religious', 'Hill Station', 'Temple', 'Wildlife', 'Market', 'Family'];
+        defaultVibes.forEach(vibe => {
+          vibeCounts[vibe] = 0;
+        });
+        
+        // Count actual vibes from location data
+        if (typeof locationData !== 'undefined' && Array.isArray(locationData)) {
+          locationData.forEach(location => {
+            if (location.vibe) {
+              // Split by comma and trim each vibe
+              const vibes = location.vibe.split(',').map(v => v.trim());
+              vibes.forEach(vibe => {
+                if (vibeCounts[vibe] !== undefined) {
+                  vibeCounts[vibe]++;
+                } else {
+                  vibeCounts[vibe] = 1;
+                }
+              });
+            }
+            
+            // Also count by type if available
+            if (location.type) {
+              const type = location.type.charAt(0).toUpperCase() + location.type.slice(1);
+              if (vibeCounts[type] !== undefined) {
+                vibeCounts[type]++;
+              }
+            }
+          });
+        }
+        
+        return vibeCounts;
+      }
+
+      // Function to get color for vibe
+      function getVibeColor(vibe) {
+        const colors = {
+          'Fun': '#FFD700', // Gold
+          'Relax': '#4ECDC4', // Teal
+          'Romantic': '#FF6B6B', // Coral
+          'Energetic': '#FF9F1C', // Orange
+          'Historical': '#6A0572', // Purple
+          'Natural': '#2ECC71', // Green
+          'Adventure': '#E74C3C', // Red
+          'Religious': '#3498DB', // Blue
+          'Hill Station': '#9B59B6', // Purple
+          'Temple': '#1ABC9C', // Turquoise
+          'Wildlife': '#27AE60', // Green
+          'Market': '#F1C40F', // Yellow
+          'Family': '#FFD700' // Gold
+        };
+        return colors[vibe] || '#8B5CF6'; // Default to purple
+      }
+
+      // Function to get icon for vibe
+      function getVibeIcon(vibe) {
+        const icons = {
+          'Fun': 'fa-smile',
+          'Relax': 'fa-peace',
+          'Romantic': 'fa-heart',
+          'Energetic': 'fa-bolt',
+          'Historical': 'fa-landmark',
+          'Natural': 'fa-tree',
+          'Adventure': 'fa-mountain',
+          'Religious': 'fa-pray',
+          'Hill Station': 'fa-cloud-sun',
+          'Temple': 'fa-pray',
+          'Wildlife': 'fa-paw',
+          'Market': 'fa-shopping-bag',
+          'Family': 'fa-users'
+        };
+        return icons[vibe] || 'fa-star';
+      }
+
+      // Update stats
+      function updateStats() {
+        if (typeof locationData !== 'undefined' && Array.isArray(locationData)) {
+          document.getElementById('totalLocations').textContent = locationData.length + '+';
+          
+          // Count total vibes shared (sum of all vibes in all locations)
+          let vibeCount = 0;
+          locationData.forEach(location => {
+            if (location.vibe) {
+              vibeCount += location.vibe.split(',').length;
+            }
+          });
+          document.getElementById('totalVibes').textContent = vibeCount + '+';
+          
+          // Count unique cities/districts
+          const cities = new Set();
+          locationData.forEach(location => {
+            if (location.district) {
+              cities.add(location.district);
+            }
+          });
+          document.getElementById('totalCities').textContent = '10+';
+        }
+      }
+
+      // Generate vibe cards
+      function generateVibeCards() {
+        const vibeCounts = countVibesByType();
+        const container = document.getElementById('vibeCardsContainer');
+        
+        // Sort vibes by count (descending)
+        const sortedVibes = Object.entries(vibeCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3); // Get top 3 vibes
+        
+        // Clear container
+        container.innerHTML = '';
+        
+        // Add vibe cards
+        sortedVibes.forEach(([vibe, count]) => {
+          const color = getVibeColor(vibe);
+          const icon = getVibeIcon(vibe);
+          container.innerHTML += createVibeCard(vibe, count, color, icon);
+        });
+      }
+
+      // Initialize
+      updateStats();
+      generateVibeCards();
+    });
+  </script>
+
+</body>
+</html>
